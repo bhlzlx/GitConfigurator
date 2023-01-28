@@ -1,6 +1,8 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
-        "qapplication": "cpp"
-    }
+        "qapplication": "cpp",
+        "ostream": "cpp"
+    },
+    "cmake.configureOnOpen": false
 }

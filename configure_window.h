@@ -1,13 +1,17 @@
-#pragma once
+﻿#pragma once
 #include <qmainwindow>
 #include <qwidget>
 #include <string>
+#include <qstring>
+#include <qvariant.h>
+#include <qmap>
+
 #include "ui_configure_window.h"
 
 enum class ParseState {
     None,
     Catagory, //
-    Items,
+    // Items,
     Key,
     KeyEnd,
     Value,
@@ -117,6 +121,14 @@ public:
                 }
                 break;
             }
+            case ParseState::Comment: {
+                if(ch == '\r' ||ch=='\n') {
+                    changeState(ParseState::None);
+                } else {
+                    text_.push_back(ch);
+                }
+                break;
+            }
         }
         checkEOL(ch);
         return rst_;
@@ -126,7 +138,8 @@ public:
 class ConfigureWindow :public QMainWindow {
     Q_OBJECT
 private:
-    Ui::ConfWindow      ui_;
+    Ui::ConfWindow                      ui_;
+    QMap<QString,QMap<QString,QString>> confData_;
 public:
     ConfigureWindow(QWidget* parent = nullptr);
     ~ConfigureWindow();
