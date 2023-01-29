@@ -18,41 +18,48 @@ char const conf_sample[] = R"([user]
 
 ConfigureWindow::ConfigureWindow(QWidget* parent) {
     ui_.setupUi(this);
+    // for(auto ch : conf_sample) {
+    //     auto rst = parser.parse(ch);
+    //     if(rst.code == ParseCode::Token) {
+    //         std::cout<<rst.text<<std::endl;
+    //     }
+    // }
+    loadUserConfig();
+}
+
+ConfigureWindow::~ConfigureWindow() {
+}
+
+bool ConfigureWindow::loadUserConfig() {
     QString homePath = QDir::homePath();
-    QFile userConfFile(homePath + "\\.gitconfig");
+    QFile userConfFile(homePath + "/.gitconfig");
     bool openRst = userConfFile.open(QIODevice::OpenModeFlag::ReadOnly);
     if(openRst) {
         GitConfParser parser;
         QByteArray data = userConfFile.readAll();
-        auto catagoryIter = confData_.begin();
+        size_t catagory = 0;
+        std::string currentKey;
         for(auto ch : data) {
             auto parseRst = parser.parse(ch);
-            QString currentKey;
             switch(parseRst.code) {
                 case ParseCode::Token: {
                     switch(parseRst.state) {
                         case ParseState::Catagory: {
-                            catagoryIter = confData_.insert(QString(parseRst.text.c_str()), {});
+                            confData_.push_back({parseRst.text, {}});
+                            catagory = confData_.size() - 1;
                             break;
                         }
                         case ParseState::Key: {
-                            currentKey = QString(parseRst.text.c_str());
+                            currentKey = parseRst.text;
                             break;
                         }
                         case ParseState::Value: {
-                            catagoryIter->insert(currentKey, parseRst.text.c_str());
+                            confData_[catagory].second.push_back({currentKey, parseRst.text});
+                            break;
                         }
                         case ParseState::Comment: {
-                            size_t i = 0;
-                            while(true) {
-                                QString key = QString("#") + QVariant(i).toString();
-                                auto iter = catagoryIter->find(key);
-                                if(iter == catagoryIter->end()) {
-                                    catagoryIter->insert(key, parseRst.text.c_str());
-                                    break;
-                                }
-                                ++i;
-                            }
+                            confData_[catagory].second.push_back({"#", parseRst.text});
+                            break;
                         }
                     }
                 }
@@ -66,15 +73,8 @@ ConfigureWindow::ConfigureWindow(QWidget* parent) {
                 break;
             }
         }
+        return true;
+    } else {
+        return false;
     }
-
-    // for(auto ch : conf_sample) {
-    //     auto rst = parser.parse(ch);
-    //     if(rst.code == ParseCode::Token) {
-    //         std::cout<<rst.text<<std::endl;
-    //     }
-    // }
-}
-
-ConfigureWindow::~ConfigureWindow() {
 }

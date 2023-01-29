@@ -4,7 +4,9 @@
 #include <string>
 #include <qstring>
 #include <qvariant.h>
-#include <qmap>
+
+#include <vector>
+#include <string>
 
 #include "ui_configure_window.h"
 
@@ -34,8 +36,10 @@ class GitConfParser {
 private:
     ParseState      state_;
     std::string     text_;
-    bool            inCatagory_;
     ParseResult     rst_;
+    bool            inCatagory_;
+    bool            valueStart_;
+    bool            escape_;
 private:
     void checkEOL(char ch) {
         if(ch == '\r' || ch == '\n') {
@@ -58,6 +62,11 @@ private:
 public:
     GitConfParser()
         : state_(ParseState::None)
+        , text_{}
+        , rst_{}
+        , inCatagory_(false)
+        , valueStart_(false)
+        , escape_(false)
     {}
 
     void reset() {
@@ -113,11 +122,28 @@ public:
                 break;
             }
             case ParseState::Value: {
-                if(isBlank(ch)) {
-                } else if(ch == '\r' || ch == '\n'){
+                if(!valueStart_) {
+                    if(!isBlank(ch)) {
+                        valueStart_ = true;
+                        text_.clear();
+                    } else {
+                        break;
+                    }
+                }
+                if(ch == '\r' || ch == '\n'){
                     changeState(ParseState::None);
+                    valueStart_ = false;
                 } else {
-                    text_.push_back(ch);
+                    if(escape_) {
+                        text_.push_back(ch);
+                        escape_ = false;
+                    } else {
+                        if(ch == '\\') {
+                            escape_ =  true;
+                        } else {
+                            text_.push_back(ch);
+                        }
+                    }
                 }
                 break;
             }
@@ -135,12 +161,19 @@ public:
     }
 };
 
+struct value_pair {
+    std::string key;
+    std::string value;
+};
+
 class ConfigureWindow :public QMainWindow {
     Q_OBJECT
 private:
-    Ui::ConfWindow                      ui_;
-    QMap<QString,QMap<QString,QString>> confData_;
+    Ui::ConfWindow                              ui_;
+    std::vector<std::pair<std::string,std::vector<value_pair>>>        confData_;
 public:
     ConfigureWindow(QWidget* parent = nullptr);
     ~ConfigureWindow();
+
+    bool loadUserConfig();
 };

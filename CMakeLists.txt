@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
-set( CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} "D:/QT/5.15.2/msvc2019/lib/cmake")
+set( CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} "E:/compilers/QT6/5.15.2/msvc2019/lib/cmake")
+# set( CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} "D:/QT/5.15.2/msvc2019/lib/cmake")
 
 project(GitConfigurator)
 
