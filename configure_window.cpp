@@ -3,6 +3,7 @@
 #include <qdir>
 #include <qfile>
 #include "gitconf_parser.h"
+#include "gitconf_tree_model.h"
 
 char const conf_sample[] = R"([user]
 	name = kusugawa
@@ -27,6 +28,9 @@ ConfigureWindow::ConfigureWindow(QWidget* parent) {
     //     }
     // }
     loadUserConfig();
+    treeModel_ = new GitconfTreeModel(rootNode_, this);
+    treeView_ = ui_.content_treeview;
+    treeView_->setModel(treeModel_);
 }
 
 ConfigureWindow::~ConfigureWindow() {

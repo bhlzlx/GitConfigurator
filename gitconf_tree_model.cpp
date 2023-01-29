@@ -9,14 +9,10 @@ QVariant GitconfTreeModel::data(const QModelIndex& index, int role) const {
         return QVariant();
     }
     auto node = getNode(index);
-    if(role!=Qt::DisplayRole) {
-        return QVariant();
-    }
-    if(index.column() == 0) {
-        return QVariant(node->caption.c_str());
-    }
-    if(index.column() == 1) {
-        if(node->type == node_type::keyvalue) {
+    if(role == Qt::EditRole || role == Qt::DisplayRole) {
+        if(index.column() == 0) {
+            return QVariant(node->caption.c_str());
+        } else if(index.column() == 1) {
             return QVariant(node->val.c_str());
         }
     }
@@ -38,7 +34,9 @@ QVariant GitconfTreeModel::headerData(int section, Qt::Orientation orientation, 
 
 QModelIndex GitconfTreeModel::index(int row, int column, const QModelIndex &parent) const {
     if(!parent.isValid()) {
-        return createIndex(0, 0, rootNode_);
+        if(row < rootNode_->children.size()) {
+            return createIndex(row, 0, rootNode_->children[row]);
+        }
     } else {
         auto ptr = (node*)parent.internalPointer();
         auto child = ptr->children[row];
@@ -47,16 +45,24 @@ QModelIndex GitconfTreeModel::index(int row, int column, const QModelIndex &pare
 }
 
 QModelIndex GitconfTreeModel::parent(const QModelIndex &index) const {
+    if(!index.isValid()) {
+        return QModelIndex();
+    }
     auto ptr = (node*)index.internalPointer();
-    if(!ptr->parent) {
+    if(ptr->parent == rootNode_) {
         return QModelIndex();
     }
     return createIndex(ptr->parent->index, 0, ptr->parent);
 }
 
 int GitconfTreeModel::rowCount(const QModelIndex &parent) const {
-    auto ptr = (node*)parent.internalPointer();
-    return ptr->children.size();
+    if(parent.isValid()) {
+        auto ptr = (node*)parent.internalPointer();
+        return ptr->children.size();
+    } else {
+        return rootNode_->children.size();
+    }
+    return 0;
 }
 
 int GitconfTreeModel::columnCount(const QModelIndex &parent) const {
@@ -67,9 +73,7 @@ Qt::ItemFlags GitconfTreeModel::flags(const QModelIndex &index) const {
     if(index.isValid()) {
         auto ptr = (node*)index.internalPointer();
         if(ptr->type == node_type::keyvalue) {
-            if(index.column() == 1) {
-                return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
-            }
+            return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
         }
         return QAbstractItemModel::flags(index);
     } else {
