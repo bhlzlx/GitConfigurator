@@ -2,6 +2,7 @@
 #include <iostream>
 #include <qdir>
 #include <qfile>
+#include <qmenu>
 #include "gitconf_parser.h"
 #include "gitconf_tree_model.h"
 
@@ -31,6 +32,16 @@ ConfigureWindow::ConfigureWindow(QWidget* parent) {
     treeModel_ = new GitconfTreeModel(rootNode_, this);
     treeView_ = ui_.content_treeview;
     treeView_->setModel(treeModel_);
+    treeView_->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(treeView_, &QTreeView::customContextMenuRequested, this, &ConfigureWindow::onTreeViewMenu);
+}
+
+void ConfigureWindow::onTreeViewMenu(QPoint const& pt) {
+    auto index = treeView_->indexAt(pt);
+    if(!index.isValid()) {
+    }
+    QMenu menu;
+
 }
 
 ConfigureWindow::~ConfigureWindow() {

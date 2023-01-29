@@ -22,6 +22,8 @@ private:
     node*                                   rootNode_;
     GitconfTreeModel*                       treeModel_;
     QTreeView*                              treeView_;
+private:
+    Q_SLOT void onTreeViewMenu(QPoint const& pt);
 
 public:
     ConfigureWindow(QWidget* parent = nullptr);
