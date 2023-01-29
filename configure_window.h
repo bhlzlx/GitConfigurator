@@ -161,8 +161,17 @@ public:
     }
 };
 
-struct value_pair {
-    std::string key;
+struct node {
+    node*               parent;
+    std::vector<node*>  children;
+};
+
+struct catagory_node :public node {
+    std::string name;
+};
+
+struct value_node : public node {
+    std::string key; 
     std::string value;
 };
 
@@ -170,7 +179,7 @@ class ConfigureWindow :public QMainWindow {
     Q_OBJECT
 private:
     Ui::ConfWindow                              ui_;
-    std::vector<std::pair<std::string,std::vector<value_pair>>>        confData_;
+    std::vector<catagory_node*>                 confData_;
 public:
     ConfigureWindow(QWidget* parent = nullptr);
     ~ConfigureWindow();

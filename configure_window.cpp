@@ -45,7 +45,9 @@ bool ConfigureWindow::loadUserConfig() {
                 case ParseCode::Token: {
                     switch(parseRst.state) {
                         case ParseState::Catagory: {
-                            confData_.push_back({parseRst.text, {}});
+                            auto cataNode = new catagory_node();
+                            cataNode->name = parseRst.text;
+                            confData_.push_back(cataNode);
                             catagory = confData_.size() - 1;
                             break;
                         }
@@ -54,11 +56,19 @@ bool ConfigureWindow::loadUserConfig() {
                             break;
                         }
                         case ParseState::Value: {
-                            confData_[catagory].second.push_back({currentKey, parseRst.text});
+                            auto valNode = new value_node();
+                            valNode->parent = confData_[catagory];
+                            valNode->key = currentKey;
+                            valNode->value = parseRst.text;
+                            confData_[catagory]->children.push_back(valNode);
                             break;
                         }
                         case ParseState::Comment: {
-                            confData_[catagory].second.push_back({"#", parseRst.text});
+                            auto valNode = new value_node();
+                            valNode->parent = confData_[catagory];
+                            valNode->key = "#";
+                            valNode->value = parseRst.text;
+                            confData_[catagory]->children.push_back(valNode);
                             break;
                         }
                     }
