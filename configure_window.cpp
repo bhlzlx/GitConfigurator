@@ -2,6 +2,7 @@
 #include <iostream>
 #include <qdir>
 #include <qfile>
+#include "gitconf_parser.h"
 
 char const conf_sample[] = R"([user]
 	name = kusugawa
@@ -18,6 +19,7 @@ char const conf_sample[] = R"([user]
 
 ConfigureWindow::ConfigureWindow(QWidget* parent) {
     ui_.setupUi(this);
+    rootNode_ = new node(node_type::root,"root");
     // for(auto ch : conf_sample) {
     //     auto rst = parser.parse(ch);
     //     if(rst.code == ParseCode::Token) {
@@ -37,7 +39,7 @@ bool ConfigureWindow::loadUserConfig() {
     if(openRst) {
         GitConfParser parser;
         QByteArray data = userConfFile.readAll();
-        size_t catagory = 0;
+        node* catagory = nullptr;
         std::string currentKey;
         for(auto ch : data) {
             auto parseRst = parser.parse(ch);
@@ -45,10 +47,8 @@ bool ConfigureWindow::loadUserConfig() {
                 case ParseCode::Token: {
                     switch(parseRst.state) {
                         case ParseState::Catagory: {
-                            auto cataNode = new catagory_node();
-                            cataNode->name = parseRst.text;
-                            confData_.push_back(cataNode);
-                            catagory = confData_.size() - 1;
+                            catagory = new node(node_type::catagory, parseRst.text);
+                            rootNode_->addChild(catagory);
                             break;
                         }
                         case ParseState::Key: {
@@ -56,19 +56,13 @@ bool ConfigureWindow::loadUserConfig() {
                             break;
                         }
                         case ParseState::Value: {
-                            auto valNode = new value_node();
-                            valNode->parent = confData_[catagory];
-                            valNode->key = currentKey;
-                            valNode->value = parseRst.text;
-                            confData_[catagory]->children.push_back(valNode);
+                            auto valNode = new node(node_type::keyvalue, currentKey, parseRst.text);
+                            catagory->addChild(valNode);
                             break;
                         }
                         case ParseState::Comment: {
-                            auto valNode = new value_node();
-                            valNode->parent = confData_[catagory];
-                            valNode->key = "#";
-                            valNode->value = parseRst.text;
-                            confData_[catagory]->children.push_back(valNode);
+                            auto valNode = new node(node_type::comment, parseRst.text);
+                            catagory->addChild(valNode);
                             break;
                         }
                     }
