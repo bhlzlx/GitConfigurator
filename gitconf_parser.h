@@ -216,6 +216,7 @@ struct node {
                 children[i]->index = i;
             }
             children.pop_back();
+            delete ptr;
             return true;
         }
         return false;
