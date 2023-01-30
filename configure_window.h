@@ -27,6 +27,9 @@ private:
     Q_SLOT void onAddCatagory(bool triggered);
     Q_SLOT void onAddValue(bool triggered);
     Q_SLOT void onRemove(bool triggered);
+    Q_SLOT void onComment(bool triggered);
+    Q_SLOT void onUncomment(bool triggered);
+    Q_SLOT void saveConfig();
 
 public:
     ConfigureWindow(QWidget* parent = nullptr);

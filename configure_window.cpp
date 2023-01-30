@@ -42,6 +42,7 @@ ConfigureWindow::ConfigureWindow(QWidget* parent) {
     treeView_->setModel(treeModel_);
     treeView_->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(treeView_, &QTreeView::customContextMenuRequested, this, &ConfigureWindow::onTreeViewMenu);
+    connect(ui_.saveButton, &QPushButton::clicked, this, &ConfigureWindow::saveConfig);
 }
 
 void ConfigureWindow::onTreeViewMenu(QPoint const& pt) {
@@ -60,6 +61,10 @@ void ConfigureWindow::onTreeViewMenu(QPoint const& pt) {
         }
         // delete
         menu.addAction("remove", this, SLOT(onRemove(bool)));
+        if(ptr->type == node_type::keyvalue && index.column() == 1) {
+            menu.addAction("comment", this, SLOT(onComment(bool)));
+            menu.addAction("uncomment", this, SLOT(onUncomment(bool)));
+        }
     }
     menu.exec(QCursor::pos());
 }
@@ -73,6 +78,8 @@ void ConfigureWindow::onAddValue(bool triggered) {
     ptr->caption = "#";
     ptr->val = "#";
     treeModel_->dataChanged(item, item);
+    treeView_->expand(current);
+    treeView_->edit(item);
 }
 
 void ConfigureWindow::onRemove(bool triggered) {
@@ -80,6 +87,24 @@ void ConfigureWindow::onRemove(bool triggered) {
     auto parent = treeModel_->parent(current);
     treeModel_->removeRows(current.row(), 1, parent);
     treeModel_->dataChanged(parent, parent);
+}
+
+void ConfigureWindow::onComment(bool triggered) {
+    auto current = treeView_->currentIndex();
+    auto ptr = (node*)current.internalPointer();
+    if(ptr->val.size() && ptr->val[0] != ';') {
+        ptr->val = ";" + ptr->val;
+    }
+    treeModel_->dataChanged(current, current);
+}
+
+void ConfigureWindow::onUncomment(bool triggered) {
+    auto current = treeView_->currentIndex();
+    auto ptr = (node*)current.internalPointer();
+    if(ptr->val.size() && ptr->val[0] == ';') {
+        ptr->val = std::string(ptr->val.begin() + 1, ptr->val.end());
+    }
+    treeModel_->dataChanged(current, current);
 }
 
 void ConfigureWindow::onAddCatagory(bool triggered) {
@@ -96,11 +121,20 @@ void ConfigureWindow::onAddCatagory(bool triggered) {
 ConfigureWindow::~ConfigureWindow() {
 }
 
+void ConfigureWindow::saveConfig() {
+    auto bytes = treeModel_->serialize();
+    QFile userConfFile(ui_.pathLabel->text());
+    bool openRst = userConfFile.open(QIODevice::OpenModeFlag::ReadWrite|QIODevice::OpenModeFlag::Truncate);
+    userConfFile.write(bytes);
+    userConfFile.close();
+}
+
 bool ConfigureWindow::loadUserConfig() {
     QString homePath = QDir::homePath();
     QFile userConfFile(homePath + "/.gitconfig");
     bool openRst = userConfFile.open(QIODevice::OpenModeFlag::ReadOnly);
     if(openRst) {
+        ui_.pathLabel->setText(homePath + "/.gitconfig");
         GitConfParser parser;
         QByteArray data = userConfFile.readAll();
         node* catagory = nullptr;
@@ -141,6 +175,7 @@ bool ConfigureWindow::loadUserConfig() {
                 break;
             }
         }
+        userConfFile.close();
         return true;
     } else {
         return false;

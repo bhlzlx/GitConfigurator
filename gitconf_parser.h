@@ -142,7 +142,16 @@ public:
                 if(ch == '\r' ||ch=='\n') {
                     changeState(ParseState::None);
                 } else {
-                    text_.push_back(ch);
+                    if(escape_) {
+                        text_.push_back(ch);
+                        escape_ = false;
+                    } else {
+                        if(ch == '\\') {
+                            escape_ =  true;
+                        } else {
+                            text_.push_back(ch);
+                        }
+                    }
                 }
                 break;
             }

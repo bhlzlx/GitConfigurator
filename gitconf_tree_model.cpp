@@ -1,5 +1,48 @@
 ﻿#include "gitconf_tree_model.h"
 
+char const escape_charactors[] = "\"\\";
+
+std::string Unescape(std::string const& text) {
+    std::string rst;
+    for(auto ch : text) {
+        bool escape = false;
+        for(auto c : escape_charactors) {
+            if(ch == c) {
+                escape = true;
+                break;
+            }
+        }
+        if(escape) {
+            rst.push_back('\\');
+        }
+        rst.push_back(ch);
+    }
+    return rst;
+}
+
+QByteArray GitconfTreeModel::serialize() const {
+    QByteArray bytearray;
+    auto root = rootNode_;
+    for(auto const& catagory: root->children) {
+        bytearray.append('[');
+        bytearray.append(catagory->caption.c_str(), catagory->caption.size());
+        bytearray.append("]\n");
+        for(auto const& item: catagory->children) {
+            bytearray.append("    ");
+            if(item->type == node_type::keyvalue) {
+                bytearray.append(item->caption.c_str());
+                bytearray.append(" = ");
+                bytearray.append(Unescape(item->val).c_str());
+            } else {
+                bytearray.append(";");
+                bytearray.append(Unescape(item->val).c_str());
+            }
+            bytearray.append("\n");
+        }
+    }
+    return bytearray;
+}
+
 node* GitconfTreeModel::getNode(const QModelIndex& index) const {
     return (node*)index.internalPointer();
 }
@@ -87,9 +130,6 @@ Qt::ItemFlags GitconfTreeModel::flags(const QModelIndex &index) const {
 }
 
 bool GitconfTreeModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    if(index.column() != 1) {
-        return false;
-    }
     auto ptr = (node*)index.internalPointer();
     if(ptr->type == node_type::keyvalue) {
         ptr->val = value.toString().toStdString();

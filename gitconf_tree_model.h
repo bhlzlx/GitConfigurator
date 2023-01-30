@@ -23,6 +23,8 @@ public:
 
     ~GitconfTreeModel() {}
 
+    QByteArray serialize() const;
+
     node* getNode(const QModelIndex& index) const;
     QVariant data( const QModelIndex& index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
