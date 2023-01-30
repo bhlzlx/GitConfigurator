@@ -11,7 +11,11 @@ QVariant GitconfTreeModel::data(const QModelIndex& index, int role) const {
     auto node = getNode(index);
     if(role == Qt::EditRole || role == Qt::DisplayRole) {
         if(index.column() == 0) {
-            return QVariant(node->caption.c_str());
+            if(node->type == node_type::comment) {
+                return QVariant("#");
+            } else {
+                return QVariant(node->caption.c_str());
+            }
         } else if(index.column() == 1) {
             return QVariant(node->val.c_str());
         }
@@ -24,10 +28,10 @@ QVariant GitconfTreeModel::headerData(int section, Qt::Orientation orientation, 
         return QVariant();
     }
     if(section == 0) {
-        return QVariant(u8"字段");
+        return QVariant(u8"name");
     }
     if(section == 1) {
-        return QVariant(u8"值");
+        return QVariant(u8"value");
     }
     return QVariant();
 }
@@ -42,6 +46,7 @@ QModelIndex GitconfTreeModel::index(int row, int column, const QModelIndex &pare
         auto child = ptr->children[row];
         return createIndex(row, column, child);
     }
+    return QModelIndex();
 }
 
 QModelIndex GitconfTreeModel::parent(const QModelIndex &index) const {
@@ -102,11 +107,11 @@ bool GitconfTreeModel::insertColumns(int position, int columns, const QModelInde
         auto ptr = (node*)parent.internalPointer();
         if(ptr->type == node_type::catagory) {
             auto child = new node(node_type::keyvalue, "");
-            ptr->addChild(child);
+            ptr->insertChild(position, child);
         }
         else if(ptr->type == node_type::root) {
             auto child = new node(node_type::catagory, "");
-            ptr->addChild(child);
+            ptr->insertChild(position, child);
         } else {
             return false;
         }
@@ -124,9 +129,29 @@ bool GitconfTreeModel::removeColumns(int position, int columns, const QModelInde
 }
 
 bool GitconfTreeModel::insertRows(int position, int rows, const QModelIndex &parent) {
-    return false;
+    if(rows != 1) {
+        return false;
+    }
+    auto ptr = rootNode_;
+    if(parent.isValid()) {
+        ptr = (node*)parent.internalPointer();
+    }
+    beginInsertRows(parent, position, position);
+    ptr->insertChild(position, new node(node_type::comment,""));
+    endInsertRows();
+    return true;
 }
 
 bool GitconfTreeModel::removeRows(int position, int rows, const QModelIndex &parent) {
-    return false;
+    if(rows != 1) {
+        return false;
+    }
+    auto ptr = rootNode_;
+    if(parent.isValid()) {
+        ptr = (node*)parent.internalPointer();
+    }
+    beginRemoveRows(parent, position, position);
+    ptr->removeChild(position);
+    endRemoveRows();
+    return true;
 }

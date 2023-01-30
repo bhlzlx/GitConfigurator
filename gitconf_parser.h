@@ -184,6 +184,20 @@ struct node {
         node->parent = this;
     }
 
+    bool insertChild(size_t pos, node* node) {
+        if(pos>children.size()) {
+            return false;
+        }
+        children.push_back(node);
+        for(size_t i = pos; i < children.size() - 1; ++i) {
+            std::swap(children[i], children.back());
+            children[i]->index = i;
+            children.back()->index = children.size() - 1;
+        }
+        node->parent = this;
+        return true;
+    }
+
     bool removeChild(int index) {
         if(index<children.size()) {
             auto ptr = children[index];

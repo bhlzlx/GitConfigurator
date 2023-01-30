@@ -24,6 +24,9 @@ private:
     QTreeView*                              treeView_;
 private:
     Q_SLOT void onTreeViewMenu(QPoint const& pt);
+    Q_SLOT void onAddCatagory(bool triggered);
+    Q_SLOT void onAddValue(bool triggered);
+    Q_SLOT void onRemove(bool triggered);
 
 public:
     ConfigureWindow(QWidget* parent = nullptr);
