@@ -23,6 +23,7 @@ PRIVATE
     gitconf_tree_model.cpp
     configure_window.cpp
     configure_window.ui
+    git_configure.rc
 )
 
 target_link_libraries(GitConfigurator

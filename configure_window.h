@@ -30,10 +30,12 @@ private:
     Q_SLOT void onComment(bool triggered);
     Q_SLOT void onUncomment(bool triggered);
     Q_SLOT void saveConfig();
+    Q_SLOT void onOpenGitProject();
+    Q_SLOT void onLoadDefault();
 
 public:
     ConfigureWindow(QWidget* parent = nullptr);
     ~ConfigureWindow();
 
-    bool loadUserConfig();
+    bool loadConfig(QString const& filepath);
 };

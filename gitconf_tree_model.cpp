@@ -86,8 +86,10 @@ QModelIndex GitconfTreeModel::index(int row, int column, const QModelIndex &pare
         }
     } else {
         auto ptr = (node*)parent.internalPointer();
-        auto child = ptr->children[row];
-        return createIndex(row, column, child);
+        if(row < ptr->children.size()) {
+            auto child = ptr->children[row];
+            return createIndex(row, column, child);
+        }
     }
     return QModelIndex();
 }
@@ -104,13 +106,14 @@ QModelIndex GitconfTreeModel::parent(const QModelIndex &index) const {
 }
 
 int GitconfTreeModel::rowCount(const QModelIndex &parent) const {
+    int count = 0;
     if(parent.isValid()) {
         auto ptr = (node*)parent.internalPointer();
-        return ptr->children.size();
+        count = ptr->children.size();
     } else {
-        return rootNode_->children.size();
+        count = rootNode_->children.size();
     }
-    return 0;
+    return count;
 }
 
 int GitconfTreeModel::columnCount(const QModelIndex &parent) const {
@@ -132,7 +135,11 @@ Qt::ItemFlags GitconfTreeModel::flags(const QModelIndex &index) const {
 bool GitconfTreeModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     auto ptr = (node*)index.internalPointer();
     if(ptr->type == node_type::keyvalue) {
-        ptr->val = value.toString().toStdString();
+        if(index.column() == 0) {
+            ptr->caption = value.toString().toStdString();
+        } else if(index.column() == 1) {
+            ptr->val = value.toString().toStdString();
+        }
         return true;
     }
     return false;

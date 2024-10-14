@@ -4,6 +4,8 @@
 #include <qfile>
 #include <qmenu>
 #include <qcursor.h>
+#include <qfiledialog.h>
+#include <qmessagebox.h>
 #include "gitconf_parser.h"
 #include "gitconf_tree_model.h"
 
@@ -30,19 +32,22 @@ char const* catagories[] = {
 ConfigureWindow::ConfigureWindow(QWidget* parent) {
     ui_.setupUi(this);
     rootNode_ = new node(node_type::root,"root");
-    // for(auto ch : conf_sample) {
-    //     auto rst = parser.parse(ch);
-    //     if(rst.code == ParseCode::Token) {
-    //         std::cout<<rst.text<<std::endl;
-    //     }
-    // }
-    loadUserConfig();
     treeModel_ = new GitconfTreeModel(rootNode_, this);
     treeView_ = ui_.content_treeview;
-    treeView_->setModel(treeModel_);
     treeView_->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(treeView_, &QTreeView::customContextMenuRequested, this, &ConfigureWindow::onTreeViewMenu);
     connect(ui_.saveButton, &QPushButton::clicked, this, &ConfigureWindow::saveConfig);
+    connect(ui_.selectButton, &QPushButton::clicked, this, &ConfigureWindow::onOpenGitProject);
+    connect(ui_.loadDefaultButton, &QPushButton::clicked, this, &ConfigureWindow::onLoadDefault);
+    //
+    QString homePath = QDir::homePath();
+    loadConfig(homePath + "/.gitconfig");
+}
+
+
+void ConfigureWindow::onLoadDefault() {
+    QString homePath = QDir::homePath();
+    loadConfig(homePath + "/.gitconfig");
 }
 
 void ConfigureWindow::onTreeViewMenu(QPoint const& pt) {
@@ -67,6 +72,17 @@ void ConfigureWindow::onTreeViewMenu(QPoint const& pt) {
         }
     }
     menu.exec(QCursor::pos());
+}
+
+void ConfigureWindow::onOpenGitProject() {
+    auto path = QFileDialog::getExistingDirectory(this, QString("open a git repo"));
+    path += "/.git/config";
+    if(!loadConfig(path)) {
+        QMessageBox mb(this);
+        mb.setText("Invalid git repo");
+        mb.exec();
+        return ;
+    }
 }
 
 void ConfigureWindow::onAddValue(bool triggered) {
@@ -129,14 +145,15 @@ void ConfigureWindow::saveConfig() {
     userConfFile.close();
 }
 
-bool ConfigureWindow::loadUserConfig() {
-    QString homePath = QDir::homePath();
-    QFile userConfFile(homePath + "/.gitconfig");
-    bool openRst = userConfFile.open(QIODevice::OpenModeFlag::ReadOnly);
+bool ConfigureWindow::loadConfig(QString const& filepath) {
+    QFile file(filepath);
+    bool openRst = file.open(QIODevice::OpenModeFlag::ReadOnly);
     if(openRst) {
-        ui_.pathLabel->setText(homePath + "/.gitconfig");
+        treeView_->setModel(nullptr);
+        rootNode_->clear();
+        ui_.pathLabel->setText(filepath);
         GitConfParser parser;
-        QByteArray data = userConfFile.readAll();
+        QByteArray data = file.readAll();
         node* catagory = nullptr;
         std::string currentKey;
         for(auto ch : data) {
@@ -175,7 +192,8 @@ bool ConfigureWindow::loadUserConfig() {
                 break;
             }
         }
-        userConfFile.close();
+        treeView_->setModel(treeModel_);
+        treeView_->expandAll();
         return true;
     } else {
         return false;

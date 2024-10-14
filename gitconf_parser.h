@@ -216,9 +216,17 @@ struct node {
                 children[i]->index = i;
             }
             children.pop_back();
-            delete ptr;
             return true;
         }
         return false;
+    }
+
+    void clear() {
+        while(!children.empty()) {
+            auto back = children.back();
+            back->clear();
+            children.pop_back();
+            delete back;
+        }
     }
 };
